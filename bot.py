@@ -1,66 +1,40 @@
-import json
-import logging
-import random
-import asyncio
-import time
-import os
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
-
-# === БЕЗОПАСНАЯ ЗАГРУЗКА ТОКЕНА ===
-# 1. Сначала пробуем загрузить из переменных окружения
-TOKEN = os.environ.get("BOT_TOKEN")
-
-# 2. Если не нашли в переменных окружения, пробуем загрузить из файла .env
-if not TOKEN:
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-        TOKEN = os.environ.get("BOT_TOKEN")
-    except ImportError:
-        pass
-
-# 3. Если токен так и не найден, завершаем работу с ошибкой
-if not TOKEN:
-    print("❌ ОШИБКА: Токен бота не найден!")
-    print("Добавьте токен одним из способов:")
-    print("1. В переменную окружения TELEGRAM_BOT_TOKEN")
-    print("2. В файл .env (TELEGRAM_BOT_TOKEN=ваш_токен)")
-    print("3. Для Bothost: Settings → Environment Variables")
-    exit(1)
-
-print("✅ Токен успешно загружен")
-
-# --- LOGGING & DATA LOADING (SIMPLE LOGIC) ---
-# Настройка логирования
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
 # === ЗАГРУЗКА ВСЕХ ДАННЫХ (ИСПРАВЛЕННАЯ ВЕРСИЯ) ===
 # Получаем текущую директорию
 current_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(current_dir, 'data')
 
+print(f"📁 Текущая директория: {current_dir}")
+print(f"📁 Директория с данными: {data_dir}")
+
 # Проверяем существование директории data
 if not os.path.exists(data_dir):
     print(f"❌ ОШИБКА: Директория 'data' не найдена! Путь: {data_dir}")
+    print("Содержимое текущей директории:")
+    for item in os.listdir(current_dir):
+        print(f"  - {item}")
     print("Создайте директорию 'data' и поместите туда все JSON файлы")
     exit(1)
+
+# Проверим, какие файлы есть в data
+print("📂 Содержимое папки data:")
+for item in os.listdir(data_dir):
+    print(f"  - {item}")
 
 # Загрузка всех данных с проверкой файлов
 def load_json_file(filename):
     """Загружает JSON файл с обработкой ошибок"""
     filepath = os.path.join(data_dir, filename)
+    print(f"🔍 Загрузка файла: {filename} -> {filepath}")
+    
     if not os.path.exists(filepath):
-        print(f"❌ ОШИБКА: Файл '{filename}' не найден! Путь: {filepath}")
+        print(f"❌ ОШИБКА: Файл '{filename}' не найден!")
         return {}
     
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            data = json.load(f)
+            print(f"✅ Файл '{filename}' загружен успешно, {len(data)} записей")
+            return data
     except json.JSONDecodeError as e:
         print(f"❌ ОШИБКА: Неверный JSON формат в файле '{filename}': {e}")
         return {}
@@ -69,7 +43,7 @@ def load_json_file(filename):
         return {}
 
 # Загружаем все данные
-print("📂 Загрузка игровых данных...")
+print("\n📂 Загрузка игровых данных...")
 CLASSES = load_json_file('classes.json')
 LOCATIONS = load_json_file('locations.json')
 ENEMIES = load_json_file('enemies.json')
@@ -95,13 +69,23 @@ data_files = {
     'abilities.json': ABILITIES
 }
 
+print("\n📊 Результат загрузки:")
+all_loaded = True
 for filename, data in data_files.items():
     if data:
-        print(f"✅ {filename} загружен ({len(data)} записей)")
+        print(f"✅ {filename}: {len(data)} записей")
+        # Для отладки выведем первые ключи
+        if filename == 'classes.json':
+            print(f"   Классы: {list(data.keys())}")
     else:
-        print(f"⚠️ {filename} пуст или не загружен")
+        print(f"❌ {filename}: НЕ ЗАГРУЖЕН!")
+        all_loaded = False
 
-print("✅ Все данные загружены!")
+if not all_loaded:
+    print("\n⚠️ ВНИМАНИЕ: Не все файлы загрузились корректно!")
+    print("Проверьте наличие и корректность JSON файлов в папке 'data'")
+else:
+    print("\n✅ Все данные загружены успешно!")
 
 player_states = {}
 
@@ -1262,5 +1246,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
