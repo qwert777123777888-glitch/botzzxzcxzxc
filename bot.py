@@ -7,10 +7,6 @@ import os
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
-# Получаем путь к директории скрипта
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
-
 # === БЕЗОПАСНАЯ ЗАГРУЗКА ТОКЕНА ===
 # 1. Сначала пробуем загрузить из переменных окружения
 TOKEN = os.environ.get("BOT_TOKEN")
@@ -45,27 +41,69 @@ logger = logging.getLogger(__name__)
 
 # ... остальной код без изменений ...
 
-# === ЗАГРУЗКА ВСЕХ ДАННЫХ (С АБСОЛЮТНЫМИ ПУТЯМИ) ===
-with open(os.path.join(DATA_DIR, 'classes.json'), 'r', encoding='utf-8') as f:
-    CLASSES = json.load(f)
-with open(os.path.join(DATA_DIR, 'locations.json'), 'r', encoding='utf-8') as f:
-    LOCATIONS = json.load(f)
-with open(os.path.join(DATA_DIR, 'enemies.json'), 'r', encoding='utf-8') as f:
-    ENEMIES = json.load(f)
-with open(os.path.join(DATA_DIR, 'bosses.json'), 'r', encoding='utf-8') as f:
-    BOSSES = json.load(f)
-with open(os.path.join(DATA_DIR, 'quests.json'), 'r', encoding='utf-8') as f:
-    QUESTS = json.load(f)
-with open(os.path.join(DATA_DIR, 'items.json'), 'r', encoding='utf-8') as f:
-    ITEMS = json.load(f)
-with open(os.path.join(DATA_DIR, 'special_actions.json'), 'r', encoding='utf-8') as f:
-    SPECIAL_ACTIONS = json.load(f)
-with open(os.path.join(DATA_DIR, 'story.json'), 'r', encoding='utf-8') as f:
-    STORY = json.load(f)
-with open(os.path.join(DATA_DIR, 'random_events.json'), 'r', encoding='utf-8') as f:
-    RANDOM_EVENTS = json.load(f)
-with open(os.path.join(DATA_DIR, 'abilities.json'), 'r', encoding='utf-8') as f:
-    ABILITIES = json.load(f)
+# === ЗАГРУЗКА ВСЕХ ДАННЫХ (ИСПРАВЛЕННАЯ ВЕРСИЯ) ===
+# Получаем текущую директорию
+current_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(current_dir, 'data')
+
+# Проверяем существование директории data
+if not os.path.exists(data_dir):
+    print(f"❌ ОШИБКА: Директория 'data' не найдена! Путь: {data_dir}")
+    print("Создайте директорию 'data' и поместите туда все JSON файлы")
+    exit(1)
+
+# Загрузка всех данных с проверкой файлов
+def load_json_file(filename):
+    """Загружает JSON файл с обработкой ошибок"""
+    filepath = os.path.join(data_dir, filename)
+    if not os.path.exists(filepath):
+        print(f"❌ ОШИБКА: Файл '{filename}' не найден! Путь: {filepath}")
+        return {}
+    
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"❌ ОШИБКА: Неверный JSON формат в файле '{filename}': {e}")
+        return {}
+    except Exception as e:
+        print(f"❌ ОШИБКА при загрузке '{filename}': {e}")
+        return {}
+
+# Загружаем все данные
+print("📂 Загрузка игровых данных...")
+CLASSES = load_json_file('classes.json')
+LOCATIONS = load_json_file('locations.json')
+ENEMIES = load_json_file('enemies.json')
+BOSSES = load_json_file('bosses.json')
+QUESTS = load_json_file('quests.json')
+ITEMS = load_json_file('items.json')
+SPECIAL_ACTIONS = load_json_file('special_actions.json')
+STORY = load_json_file('story.json')
+RANDOM_EVENTS = load_json_file('random_events.json')
+ABILITIES = load_json_file('abilities.json')
+
+# Проверяем, что все файлы загрузились
+data_files = {
+    'classes.json': CLASSES,
+    'locations.json': LOCATIONS,
+    'enemies.json': ENEMIES,
+    'bosses.json': BOSSES,
+    'quests.json': QUESTS,
+    'items.json': ITEMS,
+    'special_actions.json': SPECIAL_ACTIONS,
+    'story.json': STORY,
+    'random_events.json': RANDOM_EVENTS,
+    'abilities.json': ABILITIES
+}
+
+for filename, data in data_files.items():
+    if data:
+        print(f"✅ {filename} загружен ({len(data)} записей)")
+    else:
+        print(f"⚠️ {filename} пуст или не загружен")
+
+print("✅ Все данные загружены!")
 
 player_states = {}
 
@@ -1226,3 +1264,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
