@@ -39,8 +39,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ... остальной код без изменений ...
-
 # === ЗАГРУЗКА ВСЕХ ДАННЫХ (ИСПРАВЛЕННАЯ ВЕРСИЯ) ===
 # Получаем текущую директорию
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1264,4 +1262,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
